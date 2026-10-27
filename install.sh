@@ -28,7 +28,7 @@ echo -e "${YELLOW}[*] Directorio de instalación: $INSTALL_DIR${NC}"
 mkdir -p "$INSTALL_DIR"
 
 # 1. Clonar o actualizar repositorio
-echo -e "${GREEN}[1/4] Descargando componentes de OmniControl PC...${NC}"
+echo -e "${GREEN}[1/5] Descargando componentes de OmniControl PC...${NC}"
 if [ -d "$INSTALL_DIR/.git" ]; then
     git -C "$INSTALL_DIR" pull --quiet origin main || true
 else
@@ -36,7 +36,7 @@ else
 fi
 
 # 2. Preparar entorno Python aislado (PEP 668 safe)
-echo -e "${GREEN}[2/4] Configurando entorno virtual aislado...${NC}"
+echo -e "${GREEN}[2/5] Configurando entorno virtual aislado...${NC}"
 VENV_DIR="$INSTALL_DIR/.venv"
 
 if command -v uv &>/dev/null; then
@@ -55,12 +55,14 @@ else
 fi
 
 # 3. Crear comando global en ~/.local/bin
-echo -e "${GREEN}[3/4] Configurando comando global 'omnicontrol'...${NC}"
+echo -e "${GREEN}[3/5] Configurando comando global 'omnicontrol' y alias 'oc'...${NC}"
 mkdir -p "$HOME/.local/bin"
 
 cat << 'EOF' > "$HOME/.local/bin/omnicontrol"
 #!/usr/bin/env bash
 DIR="$HOME/.omnicontrolpc"
+export HF_HUB_DISABLE_SYMLINKS_WARNING=1
+export TOKENIZERS_PARALLELISM=false
 if [ -f "$DIR/.venv/bin/python" ]; then
     exec "$DIR/.venv/bin/python" "$DIR/jarvis_client.py" "$@"
 elif command -v python3 &>/dev/null; then
@@ -71,9 +73,10 @@ fi
 EOF
 
 chmod +x "$HOME/.local/bin/omnicontrol"
+ln -sf "$HOME/.local/bin/omnicontrol" "$HOME/.local/bin/oc"
 
 # 4. Asegurar PATH en shell del usuario
-echo -e "${GREEN}[4/4] Verificando variables de entorno...${NC}"
+echo -e "${GREEN}[4/5] Verificando variables de entorno...${NC}"
 SHELL_RC=""
 if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
     SHELL_RC="$HOME/.zshrc"
@@ -87,13 +90,42 @@ if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ]; then
     fi
 fi
 
+# 5. Integración con Spotlight y GUI (macOS)
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo -e "${GREEN}[5/5] Compilando lanzador rápido para macOS (Spotlight / Atajos)...${NC}"
+    mkdir -p "$HOME/Applications"
+    APP_TARGET="$HOME/Applications/OmniControl.app"
+    
+    cat << 'EOF' > /tmp/omnicontrol_launcher.applescript
+tell application "System Events"
+    activate
+    set userCommand to text returned of (display dialog "OmniControl PC — Escribe tu orden:" default answer "" with title "OmniControl PC" buttons {"Cancelar", "Ejecutar"} default button "Ejecutar")
+end tell
+
+if userCommand is not "" then
+    set userHome to POSIX path of (path to home folder)
+    set binPath to userHome & ".local/bin/omnicontrol"
+    do shell script quoted form of binPath & " " & quoted form of userCommand
+end if
+EOF
+    
+    if command -v osacompile &>/dev/null; then
+        osacompile -o "$APP_TARGET" /tmp/omnicontrol_launcher.applescript 2>/dev/null || true
+        rm -f /tmp/omnicontrol_launcher.applescript
+    fi
+else
+    echo -e "${GREEN}[5/5] Instalación de componentes base completada.${NC}"
+fi
+
 echo -e "${CYAN}${BOLD}"
 echo "  =============================================================="
 echo "    ¡INSTALACIÓN COMPLETADA CON ÉXITO!"
 echo "  =============================================================="
 echo -e "${NC}"
-echo "  Puedes usar OmniControl PC desde cualquier terminal:"
-echo -e "    ${GREEN}omnicontrol \"sube el volumen al 50%\"${NC}"
-echo -e "    ${GREEN}omnicontrol \"busca apuntes de Sistemas Operativos\"${NC}"
-echo -e "    ${GREEN}omnicontrol \"abre el campus virtual\"${NC}"
+echo "  Puedes usar OmniControl PC de 3 formas:"
+echo -e "  1. Alias ultra-rápido en terminal:    ${GREEN}oc \"sube el volumen al 50%\"${NC}"
+echo -e "  2. Consola interactiva (sin params):  ${GREEN}oc${NC}"
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo -e "  3. Desde Spotlight (Cmd + Espacio):   ${GREEN}OmniControl${NC}"
+fi
 echo "  =============================================================="

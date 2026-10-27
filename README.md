@@ -28,7 +28,30 @@ Abre PowerShell y pega este comando de instalación automática:
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex"
 ```
-> **¿Sin consola?** Descarga el archivo **`install.bat`** del repositorio y haz **doble clic**. Configurará el entorno y creará un acceso directo en tu Escritorio automáticamente.
+> **¿Sin consola?** Descarga **`install.bat`** y haz **doble clic**. Configura el entorno, descarga el motor y crea un acceso directo en el Escritorio. No requiere administrador.
+
+<details>
+<summary><b>Opciones del instalador (Windows)</b></summary>
+
+```powershell
+# Instalación local junto al repositorio clonado
+.\install.bat
+
+# Copia por usuario en %LOCALAPPDATA%\Programs\OmniControlPC
+.\install.bat -UserInstall
+
+# Motor descargado previamente (instalación sin conexión)
+.\install.bat -EngineArchive "D:\offline\needle-windows-x86_64.zip"
+
+# Forzar actualización de Python, paquete y motor
+.\install.bat -Force -Upgrade
+
+# Ver todas las opciones
+Get-Help .\install.ps1 -Detailed
+```
+
+El instalador espera un asset de release llamado `needle-windows-x86_64.zip` (y su `.sha256` si está disponible). Si el asset usa otro nombre, pasa `-EngineUrl <url>` o `-EngineArchive <ruta>`. El estado generado queda en `.omnicontrol\` y el log en `.omnicontrol\install.log`. Para ejecuciones desatendidas, define `OMNICONTROL_NO_PAUSE=1`.
+</details>
 
 ---
 
@@ -37,7 +60,23 @@ Abre Terminal y ejecuta:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.sh | bash
 ```
-> Configura el comando global `omnicontrol` en tu sistema para usarlo desde cualquier terminal o atajo de teclado de Raycast / Alfred.
+> Configura el comando global `omnicontrol` y el alias ultra-rápido `oc` en tu terminal, además de compilar `OmniControl.app` para invocarlo desde Spotlight (`Cmd + Espacio`) o atajos de teclado globales.
+
+### Modos de uso desde el teclado
+
+1. **Alias en terminal:**
+   ```bash
+   oc "sube el volumen al 50%"
+   oc "busca pdf en Descargas"
+   ```
+2. **Consola interactiva (REPL):**
+   ```bash
+   oc
+   # omnicontrol > abre el campus virtual
+   # omnicontrol > silencia el audio
+   ```
+3. **Desde cualquier ventana (macOS):**
+   Presiona `Cmd + Espacio`, escribe `OmniControl`, pulsa Enter y escribe tu orden.
 
 ---
 

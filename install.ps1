@@ -77,6 +77,7 @@ $script:DefaultEngineUrl = 'https://github.com/Wagustin/omnicontrolpc/releases/l
 $script:UserAgent        = 'OmniControl-Installer/1.0'
 $script:Utf8NoBom        = New-Object System.Text.UTF8Encoding($false)
 $script:InstallDirGiven  = $PSBoundParameters.ContainsKey('InstallDir')
+$script:RunFromFile      = -not [string]::IsNullOrEmpty($PSCommandPath)
 $global:LASTEXITCODE     = 0
 
 $script:InstallRoot = $null
@@ -266,7 +267,8 @@ function Get-GitHubEngineAsset {
         $patterns = @(
             '(?i)(windows|win).*(x86[_-]?64|x64|amd64).*\.zip$',
             '(?i)(x86[_-]?64|x64|amd64).*(windows|win).*\.zip$',
-            '(?i)(needle|engine).*(windows|win).*\.zip$'
+            '(?i)(needle|engine).*(windows|win).*\.zip$',
+            '(?i)(needle|engine).*\.zip$'
         )
         foreach ($pattern in $patterns) {
             $match = $assets | Where-Object { $_.name -match $pattern } | Select-Object -First 1
@@ -539,8 +541,13 @@ function New-OrUpdateVenv {
     if ((Test-Path -LiteralPath $venvPython -PathType Leaf) -and -not $Force) {
         try {
             $global:LASTEXITCODE = 0
-            $null = & $venvPython -c "import sys" 2>$null
-            $valid = ($LASTEXITCODE -eq 0)
+            $raw = & $venvPython -c "import sys; print('%d.%d.%d' % sys.version_info[:3])" 2>$null
+            if ($LASTEXITCODE -eq 0 -and $raw) {
+                $text = (@($raw) | Select-Object -First 1).ToString().Trim()
+                if ($text -match '\d+\.\d+\.\d+') {
+                    $valid = ([version]$Matches[0] -ge [version]'3.9')
+                }
+            }
         } catch { $valid = $false }
     }
 
@@ -675,14 +682,14 @@ function Test-PeX64 {
     }
 }
 
-function Expand-EngineArchive {
+function Expand-ZipArchive {
     param(
         [Parameter(Mandatory)][string]$ArchivePath,
         [Parameter(Mandatory)][string]$WorkDir
     )
     $extractDir = Join-Path $WorkDir 'extract'
     [IO.Directory]::CreateDirectory($extractDir) | Out-Null
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    try { Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop } catch { }
     $zip = [IO.Compression.ZipFile]::OpenRead($ArchivePath)
     try {
         $total = 0
@@ -731,6 +738,9 @@ function Install-EnginePayload {
             if (Test-Path -LiteralPath $destination) { continue }
             $found = Get-ChildItem -LiteralPath $SourceDir -Filter $name -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($found) { Copy-Item -LiteralPath $found.FullName -Destination $destination -Force }
+        }
+        Get-ChildItem -LiteralPath $SourceDir -Filter '*.dll' -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $staging -Force -ErrorAction SilentlyContinue
         }
 
         Get-ChildItem -LiteralPath $staging -File -ErrorAction SilentlyContinue | ForEach-Object {
@@ -843,7 +853,7 @@ function Install-NeedleEngine {
                 if (Test-Path -LiteralPath $model) { Copy-Item -LiteralPath $model -Destination $stage -Force }
                 Install-EnginePayload -SourceDir $stage -SourceLabel $source
             } elseif ($item.Extension -ieq '.zip') {
-                $extracted = Expand-EngineArchive -ArchivePath $item.FullName -WorkDir $workDir
+                $extracted = Expand-ZipArchive -ArchivePath $item.FullName -WorkDir $workDir
                 Install-EnginePayload -SourceDir $extracted -SourceLabel $source
             } else {
                 throw "Unsupported engine archive '$($item.Name)'. Use a .zip, a folder, or needle.exe."
@@ -880,7 +890,7 @@ function Install-NeedleEngine {
             $isPe = ($header[0] -eq 0x4D -and $header[1] -eq 0x5A)
 
             if ($isZip) {
-                $extracted = Expand-EngineArchive -ArchivePath $download -WorkDir $workDir
+                $extracted = Expand-ZipArchive -ArchivePath $download -WorkDir $workDir
                 Install-EnginePayload -SourceDir $extracted -SourceLabel $url
             } elseif ($isPe) {
                 $stage = Join-Path $workDir 'single'
@@ -954,6 +964,37 @@ function Install-AppPayload {
     }
     if (-not (Test-Path -LiteralPath (Join-Path $DestinationRoot 'schemas\tools.json') -PathType Leaf)) {
         throw "schemas\tools.json is missing from $DestinationRoot."
+    }
+}
+
+function Install-AppPayloadFromSource {
+    param([Parameter(Mandatory)][string]$DestinationRoot)
+
+    if ($script:AppSourceRoot -and (Test-Path -LiteralPath (Join-Path $script:AppSourceRoot 'jarvis_client.py') -PathType Leaf)) {
+        Install-AppPayload -SourceRoot $script:AppSourceRoot -DestinationRoot $DestinationRoot
+        return
+    }
+
+    $client = Join-Path $DestinationRoot 'jarvis_client.py'
+    $tools = Join-Path $DestinationRoot 'schemas\tools.json'
+    if (-not $Force -and -not $Upgrade -and (Test-Path -LiteralPath $client -PathType Leaf) -and (Test-Path -LiteralPath $tools -PathType Leaf)) {
+        Write-Log "Application files already present: $DestinationRoot" 'OK' ([ConsoleColor]::Green)
+        return
+    }
+
+    Write-Log 'Downloading the application files from GitHub...' 'INFO'
+    $workDir = Join-Path ([IO.Path]::GetTempPath()) ('omnicontrol-app-' + [Guid]::NewGuid().ToString('N'))
+    [IO.Directory]::CreateDirectory($workDir) | Out-Null
+    try {
+        $archive = Join-Path $workDir 'source.zip'
+        $url = "https://github.com/$($script:GitHubRepo)/archive/refs/heads/main.zip"
+        Get-RemoteFile -Uri $url -Destination $archive
+        $extracted = Expand-ZipArchive -ArchivePath $archive -WorkDir $workDir
+        $found = Get-ChildItem -LiteralPath $extracted -Filter 'jarvis_client.py' -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $found) { throw 'jarvis_client.py was not found in the downloaded repository archive.' }
+        Install-AppPayload -SourceRoot $found.DirectoryName -DestinationRoot $DestinationRoot
+    } finally {
+        Remove-Item -LiteralPath $workDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -1120,12 +1161,18 @@ function New-DesktopShortcut {
 function Initialize-Environment {
     $defaultRoot = $PSScriptRoot
     if (-not $defaultRoot) { $defaultRoot = (Get-Location).ProviderPath }
+    $localPayload = (Test-Path -LiteralPath (Join-Path $defaultRoot 'jarvis_client.py') -PathType Leaf)
+    $script:AppSourceRoot = if ($localPayload) { $defaultRoot } else { $null }
 
     $root = $InstallDir
     if ($UserInstall) {
         if (-not $root) { $root = Join-Path $env:LOCALAPPDATA 'Programs\OmniControlPC' }
     } elseif (-not $root) {
-        $root = $defaultRoot
+        if ($localPayload -and $script:RunFromFile) {
+            $root = $defaultRoot
+        } else {
+            $root = Join-Path $env:LOCALAPPDATA 'Programs\OmniControlPC'
+        }
     }
     $root = Remove-TrailingSeparator (Get-FullPath $root)
 
@@ -1149,7 +1196,6 @@ function Initialize-Environment {
     }
 
     $script:InstallRoot = $root
-    $script:AppSourceRoot = $defaultRoot
     $script:DataDir = Join-Path $root '.omnicontrol'
     $script:VenvDir = Join-Path $script:DataDir '.venv'
     $script:EngineDir = Join-Path $script:DataDir 'engine\windows-x86_64'
@@ -1181,8 +1227,8 @@ function Assert-Preflight {
     } catch {
         throw "Invalid -PythonVersion '$PythonVersion'. Use a value such as 3.12."
     }
-    if ($parsedVersion -lt [version]'3.9') {
-        throw "Python $PythonVersion is too old; Python 3.9 or newer is required."
+    if ($parsedVersion.Major -ne 3 -or $parsedVersion -lt [version]'3.9') {
+        throw "Python $PythonVersion is not supported; use Python 3.9 through 3.13 (3.12 recommended)."
     }
     if (-not $PackageSpec -or $PackageSpec.StartsWith('-')) {
         throw 'Invalid -PackageSpec. Pass a package name, a requirement, or a wheel path.'
@@ -1293,7 +1339,7 @@ function Invoke-Main {
     }
 
     Write-Step 'Creating the launcher and Desktop shortcut'
-    Install-AppPayload -SourceRoot $script:AppSourceRoot -DestinationRoot $script:InstallRoot
+    Install-AppPayloadFromSource -DestinationRoot $script:InstallRoot
     $launcher = New-Launcher
     $icon = Join-Path $script:EngineDir 'needle.exe'
     $shortcut = New-DesktopShortcut -LauncherPath $launcher -WorkingDirectory $script:InstallRoot -IconPath $icon
@@ -1338,8 +1384,12 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host ''
         Write-Host 'Installation failed. Read the log above for the exact command that failed.' -ForegroundColor Red
         if ($script:LogFile) { Write-Host ("Log: {0}" -f $script:LogFile) -ForegroundColor Yellow }
-        Write-Host 'If this is a network problem, retry or pass -EngineArchive <local zip>.' -ForegroundColor Yellow
+        Write-Host 'If this is a network problem, retry, set OMNICONTROL_ENGINE_URL, or use install.bat -EngineArchive <local zip>.' -ForegroundColor Yellow
         Write-Host ''
     }
-    exit $exitCode
+    if ($script:RunFromFile) {
+        exit $exitCode
+    } elseif ($exitCode -ne 0) {
+        Write-Host 'The one-line installer failed. Re-run it in a new PowerShell window to retry.' -ForegroundColor Yellow
+    }
 }

@@ -11,6 +11,10 @@ import shutil
 import subprocess
 import sys
 
+# Silenciar avisos innecesarios de huggingface hub / tokenizers
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 IS_MAC = sys.platform == "darwin"
 IS_WIN = sys.platform == "win32"
 IS_LINUX = sys.platform.startswith("linux")
@@ -119,10 +123,10 @@ def rule_based_fallback(query):
     m_vol = re.search(r'(?:sube|baja|pon|ajusta|cambia)?\s*(?:el\s*)?volumen\s*(?:al?|en)?\s*(\d+)%?', q)
     if m_vol:
         return [{"name": "system_control", "arguments": {"action": "set_volume", "level": int(m_vol.group(1))}}]
-    if any(w in q for w in ["silencia", "mute", "mutear", "pon en silencio", "quitar sonido"]):
-        return [{"name": "system_control", "arguments": {"action": "mute"}}]
     if any(w in q for w in ["desmutea", "unmute", "activa sonido", "activa el audio", "quitar silencio"]):
         return [{"name": "system_control", "arguments": {"action": "unmute"}}]
+    if any(w in q for w in ["silencia", "mute", "mutear", "pon en silencio", "quitar sonido"]):
+        return [{"name": "system_control", "arguments": {"action": "mute"}}]
     if any(w in q for w in ["captura de pantalla", "screenshot", "pantallazo", "foto de la pantalla"]):
         return [{"name": "system_control", "arguments": {"action": "take_screenshot"}}]
     if any(w in q for w in ["bloquea la pantalla", "bloquear pantalla", "bloquea el mac", "bloquea el pc", "suspende la pantalla"]):
@@ -194,12 +198,7 @@ def execute_call(call, query=""):
     elif name == "delegate_kathy":
         print(f"[→] Delegado a Kathy: {args.get('request')}")
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Uso: omnicontrol 'sube el volumen al 50%'")
-        sys.exit(0)
-        
-    query = " ".join(sys.argv[1:])
+def run_omnicontrol(query):
     executed = False
     
     # Intentar inferencia local con Needle 3
@@ -220,7 +219,7 @@ if __name__ == "__main__":
             for call in calls:
                 execute_call(call, query)
             executed = True
-    except Exception as e:
+    except Exception:
         pass
         
     # Fallback determinista si Needle no disparó o tuvo baja confianza
@@ -232,3 +231,23 @@ if __name__ == "__main__":
             executed = True
         else:
             execute_call({"name": "delegate_kathy", "arguments": {"request": query}}, query)
+
+if __name__ == "__main__":
+    if len(sys.argv) >= 2:
+        run_omnicontrol(" ".join(sys.argv[1:]))
+    else:
+        print("OmniControl PC — Consola Interactiva")
+        print("Escribe tus órdenes en lenguaje natural (o 'salir' para terminar).\n")
+        while True:
+            try:
+                line = input("omnicontrol > ").strip()
+                if not line:
+                    continue
+                if line.lower() in ["salir", "exit", "quit", "q"]:
+                    print("Hasta luego.")
+                    break
+                run_omnicontrol(line)
+                print()
+            except (KeyboardInterrupt, EOFError):
+                print("\nSaliendo.")
+                break

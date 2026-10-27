@@ -63,7 +63,7 @@ goto :end
 :failed
 echo.
 echo [ERROR] Installation failed with exit code %RC%.
-echo         Read the log in "%SCRIPT_DIR%.omnicontrol\install.log".
+echo         Read the installer log (usually .omnicontrol\install.log).
 
 :end
 rem Do not pause in unattended runs. -NoPause may appear anywhere.
