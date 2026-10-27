@@ -62,21 +62,35 @@ curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install
 ```
 > Configura el comando global `omnicontrol` y el alias ultra-rápido `oc` en tu terminal, además de compilar `OmniControl.app` para invocarlo desde Spotlight (`Cmd + Espacio`) o atajos de teclado globales.
 
-### Modos de uso desde el teclado
+### Modos de uso
 
-1. **Alias en terminal:**
-   ```bash
-   oc "sube el volumen al 50%"
-   oc "busca pdf en Descargas"
-   ```
-2. **Consola interactiva (REPL):**
-   ```bash
-   oc
-   # omnicontrol > abre el campus virtual
-   # omnicontrol > silencia el audio
-   ```
-3. **Desde cualquier ventana (macOS):**
-   Presiona `Cmd + Espacio`, escribe `OmniControl`, pulsa Enter y escribe tu orden.
+#### 🎙️ 1. Modo Asistente de Voz (Push-to-Talk + Whisper Local)
+Controla tu equipo hablándole directamente en español, 100% privado y sin enviar audio a servidores externos:
+```bash
+# Iniciar modo de voz asistente
+oc --voice
+# o también:
+python jarvis_client.py --voice
+```
+* **Presiona ENTER para hablar** (o mantén pulsado en modo Push-to-Talk).
+* **Whisper Local (int8)** transcribe en tiempo real (< 150ms).
+* **Chimes de audio:** Emite un sutil tono de confirmación sonora al completar la acción o alertar si hubo un error.
+
+#### ⌨️ 2. Desde el teclado y Terminal
+* **Alias directo:**
+  ```bash
+  oc "sube el volumen al 50%"
+  oc "silencia el audio"
+  oc "busca pdf en Descargas"
+  ```
+* **Consola interactiva (REPL):**
+  ```bash
+  oc
+  # omnicontrol > abre el campus virtual
+  # omnicontrol > voice   (activa el micro)
+  ```
+* **Desde cualquier ventana (macOS):**
+  Presiona `Cmd + Espacio`, escribe `OmniControl`, pulsa Enter y escribe tu orden.
 
 ---
 
@@ -112,27 +126,32 @@ La mayoría de asistentes basados en LLMs requieren GPUs dedicadas pesadas, cons
 ## 🏗️ Arquitectura del Sistema
 
 ```
-                         Voz o Texto del Usuario
-                                   │
-                                   ▼
+                      Micrófono (Voz)                 Teclado / CLI
+                            │                               │
+                            ▼                               ▼
+       ┌──────────────────────────────────────────┐         │
+       │   Whisper Local STT (faster-whisper)     │         │
+       │     Cuantizado INT8 en Español (<150ms)  │         │
+       └────────────────────┬─────────────────────┘         │
+                            │                               │
+                            ▼ (Texto Transcrito)            │
+                            └───────────────┬───────────────┘
+                                            │
+                                            ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│             Needle 3 SAN Engine (Simple Attention Network)             │
-│            Pesos Cuantizados CQ W4 STE + A8 (~35.3 MB en disco)        │
-│          Adaptador LoRA para Español Coloquial y Materias UAB          │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-               JSON Function Call Determinista (< 28ms)
-                                   │
-         ┌─────────────────────────┴─────────────────────────┐
-         ▼                                                   ▼
-┌─────────────────────────────────┐   ┌─────────────────────────────────┐
-│     🍎 Módulo macOS (ARM64)     │   │     🪟 Módulo Windows (x64)     │
-├─────────────────────────────────┤   ├─────────────────────────────────┤
-│ • Spotlight CLI (mdfind)        │   │ • Everything CLI (es.exe) <5ms  │
-│ • AppleScript (osascript)       │   │ • PowerShell nativo             │
-│ • Gestor de ventanas & open CLI │   │ • Win32 API / NirCmd            │
-│ • Captura de pantalla nativa    │   │ • Bloqueo de sesión (rundll32)  │
-└─────────────────────────────────┘   └─────────────────────────────────┘
+│             Needle 3 SAN Engine + Capa Semántica Español               │
+│               JSON Function Call Determinista (< 28ms)                 │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   System Bridge & Audio Feedback                       │
+├───────────────────────────────────┬────────────────────────────────────┤
+│      🍎 macOS (ARM64)             │       🪟 Windows (x64)             │
+│ • Spotlight CLI (mdfind)          │ • Everything CLI (es.exe) <5ms     │
+│ • AppleScript (osascript)         │ • PowerShell & Win32 API           │
+│ • afplay Chimes & Screencapture   │ • NirCmd & Bloqueo de sesión       │
+└───────────────────────────────────┴────────────────────────────────────┘
 ```
 
 ---

@@ -43,12 +43,12 @@ if command -v uv &>/dev/null; then
     if [ ! -d "$VENV_DIR" ]; then
         uv venv --quiet --python 3.12 "$VENV_DIR" 2>/dev/null || uv venv --quiet "$VENV_DIR"
     fi
-    uv pip install --quiet --python "$VENV_DIR/bin/python" cactus-needle
+    uv pip install --quiet --python "$VENV_DIR/bin/python" cactus-needle faster-whisper sounddevice soundfile numpy
 elif command -v python3 &>/dev/null; then
     if [ ! -d "$VENV_DIR" ]; then
         python3 -m venv "$VENV_DIR"
     fi
-    "$VENV_DIR/bin/pip" install --quiet cactus-needle
+    "$VENV_DIR/bin/pip" install --quiet cactus-needle faster-whisper sounddevice soundfile numpy
 else
     echo -e "${YELLOW}[!] Python no detectado. Instálalo con 'brew install python' (macOS).${NC}"
     exit 1

@@ -232,12 +232,68 @@ def run_omnicontrol(query):
         else:
             execute_call({"name": "delegate_kathy", "arguments": {"request": query}}, query)
 
+def start_voice_mode(model_size="tiny", mock=False):
+    try:
+        from omnicontrol_voice import VoicePipeline
+        from system_bridge import feedback_success, feedback_error
+    except ImportError as e:
+        print(f"[!] Error cargando dependencias de voz: {e}")
+        print("Asegúrate de instalar 'faster-whisper', 'sounddevice' y 'soundfile'.")
+        return
+
+    print("=====================================================")
+    print("  OmniControl PC — Modo de Voz Asistente")
+    print(f"  Modelo Whisper: {model_size} (int8, español)")
+    print("  Presiona ENTER para hablar (mantén), o 'q' para salir.")
+    print("=====================================================\n")
+
+    def on_transcribed(text: str):
+        if not text or not text.strip():
+            return
+        clean_text = text.strip()
+        print(f"\n🎤 Escuchado: \"{clean_text}\"")
+        try:
+            run_omnicontrol(clean_text)
+            feedback_success()
+        except Exception as err:
+            print(f"[!] Error ejecutando orden: {err}")
+            feedback_error()
+
+    pipeline = VoicePipeline(
+        model_size=model_size,
+        language="es",
+        on_transcription=on_transcribed,
+        use_mock=mock
+    )
+
+    try:
+        while True:
+            cmd = input("\n[Voz] Presiona ENTER para hablar (o 'q' para salir): ").strip().lower()
+            if cmd in ["q", "quit", "exit"]:
+                break
+            pipeline.start_ptt()
+            input("  🎙️ Grabando... (Presiona ENTER para terminar) ")
+            pipeline.stop_ptt()
+            pipeline.wait(timeout=5)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        pipeline.shutdown()
+        print("\nModo de voz finalizado.")
+
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
-        run_omnicontrol(" ".join(sys.argv[1:]))
+        first_arg = sys.argv[1].lower()
+        if first_arg in ["--voice", "-v", "voice"]:
+            model = "tiny"
+            if len(sys.argv) >= 3 and sys.argv[2] in ["tiny", "base"]:
+                model = sys.argv[2]
+            start_voice_mode(model_size=model)
+        else:
+            run_omnicontrol(" ".join(sys.argv[1:]))
     else:
-        print("OmniControl PC — Consola Interactiva")
-        print("Escribe tus órdenes en lenguaje natural (o 'salir' para terminar).\n")
+        print("OmniControl PC — Consola")
+        print("Escribe tus órdenes, o escribe 'voice' para activar el micrófono.\n")
         while True:
             try:
                 line = input("omnicontrol > ").strip()
@@ -246,6 +302,9 @@ if __name__ == "__main__":
                 if line.lower() in ["salir", "exit", "quit", "q"]:
                     print("Hasta luego.")
                     break
+                if line.lower() in ["voice", "--voice", "-v"]:
+                    start_voice_mode()
+                    continue
                 run_omnicontrol(line)
                 print()
             except (KeyboardInterrupt, EOFError):

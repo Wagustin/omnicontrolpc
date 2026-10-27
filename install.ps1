@@ -51,7 +51,7 @@
 param(
     [string]$InstallDir,
     [string]$PythonVersion = '3.12',
-    [string]$PackageSpec = 'cactus-needle',
+    [string]$PackageSpec = 'cactus-needle faster-whisper sounddevice soundfile numpy',
     [string]$EngineUrl,
     [string]$EngineArchive,
     [string]$EngineSha256,
