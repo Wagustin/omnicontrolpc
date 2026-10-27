@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large binary weights & checkpoints
+*.safetensors
+*.cact
+*.exe
+*.a
+*.so
+*.dylib
+checkpoints/checkpoints/
+macos-arm64/macos-arm64/
+windows-x86_64/windows-x86_64/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# OS specific
+.DS_Store
+Thumbs.db

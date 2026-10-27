@@ -1,0 +1,146 @@
+[
+  {
+    "name": "find_files",
+    "description": "Buscar y localizar archivos, documentos, apuntes o PDFs en la Mac",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Término de búsqueda, nombre de archivo o tema"
+        },
+        "file_type": {
+          "type": "string",
+          "enum": [
+            "pdf",
+            "code",
+            "document",
+            "image",
+            "any"
+          ],
+          "description": "Extensión o tipo de archivo"
+        },
+        "folder": {
+          "type": "string",
+          "enum": [
+            "Downloads",
+            "Documents",
+            "obsidian_vault",
+            "Desktop",
+            "any"
+          ],
+          "description": "Carpeta donde buscar"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "open_target",
+    "description": "Abrir una aplicación, un archivo encontrado o un sitio web",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Nombre de la aplicación, archivo o URL"
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "app",
+            "file",
+            "url"
+          ],
+          "description": "Tipo de objetivo a abrir"
+        }
+      },
+      "required": [
+        "name",
+        "target_type"
+      ]
+    }
+  },
+  {
+    "name": "system_control",
+    "description": "Control del sistema de la Mac: volumen, capturas de pantalla o bloqueo",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "set_volume",
+            "mute",
+            "unmute",
+            "take_screenshot",
+            "lock_screen"
+          ],
+          "description": "Acción a realizar"
+        },
+        "level": {
+          "type": "integer",
+          "description": "Nivel numérico de volumen entre 0 y 100"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    }
+  },
+  {
+    "name": "study_notes",
+    "description": "Gestión de apuntes de estudio y notas en Obsidian",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "open_note",
+            "search_notes",
+            "create_quick_note"
+          ],
+          "description": "Acción en la bóveda de notas"
+        },
+        "subject": {
+          "type": "string",
+          "enum": [
+            "SO",
+            "FC",
+            "P3",
+            "PS",
+            "general"
+          ],
+          "description": "Materia de la universidad o categoría"
+        },
+        "title_or_query": {
+          "type": "string",
+          "description": "Título de la nota o término de búsqueda"
+        }
+      },
+      "required": [
+        "action",
+        "title_or_query"
+      ]
+    }
+  },
+  {
+    "name": "delegate_kathy",
+    "description": "Delegar consultas complejas, redacción de correos, código o preguntas a Kathy",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "string",
+          "description": "Instrucción o consulta completa para Kathy"
+        }
+      },
+      "required": [
+        "request"
+      ]
+    }
+  }
+]
