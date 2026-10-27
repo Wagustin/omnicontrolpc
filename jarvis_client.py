@@ -157,13 +157,16 @@ def rule_based_fallback(query):
 
     return []
 
-def execute_call(call):
+def execute_call(call, query=""):
     name = call.get("name")
     args = call.get("arguments", {})
     
-    # Sanitizar casos donde el modelo predijo mute con level > 0
+    # Sanitizar casos donde el modelo predijo mute en lugar de unmute o set_volume
     if name == "system_control":
-        if args.get("action") == "mute" and args.get("level") is not None and args.get("level", 0) > 0:
+        q = query.lower()
+        if args.get("action") == "mute" and any(w in q for w in ["desmutea", "unmute", "activa sonido", "activa el audio", "quitar silencio"]):
+            args["action"] = "unmute"
+        elif args.get("action") == "mute" and args.get("level") is not None and args.get("level", 0) > 0:
             args["action"] = "set_volume"
             
     print(f"[*] OmniControl Acción: {name} -> {args}")
@@ -215,7 +218,7 @@ if __name__ == "__main__":
         
         if calls and conf >= 0.45:
             for call in calls:
-                execute_call(call)
+                execute_call(call, query)
             executed = True
     except Exception as e:
         pass
@@ -225,7 +228,7 @@ if __name__ == "__main__":
         fallback_calls = rule_based_fallback(query)
         if fallback_calls:
             for call in fallback_calls:
-                execute_call(call)
+                execute_call(call, query)
             executed = True
         else:
-            execute_call({"name": "delegate_kathy", "arguments": {"request": query}})
+            execute_call({"name": "delegate_kathy", "arguments": {"request": query}}, query)
