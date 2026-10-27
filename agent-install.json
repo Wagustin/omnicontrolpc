@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "omnicontrolpc",
+  "version": "1.0.0",
+  "description": "Ultralight on-device system assistant and tool engine for macOS and Windows with Spanish fine-tuning",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/Wagustin/omnicontrolpc",
+  "capabilities": [
+    "system_control",
+    "spotlight_file_search",
+    "windows_everything_search",
+    "application_launcher",
+    "obsidian_notes_bridge"
+  ],
+  "agent_installation": {
+    "macos": {
+      "command": "curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.sh | bash",
+      "prerequisites": ["python3", "curl"],
+      "test_command": "python3 jarvis_client.py 'sube el volumen al 50%'"
+    },
+    "windows": {
+      "command": "powershell -ExecutionPolicy Bypass -Command \"irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex\"",
+      "prerequisites": ["powershell", "python (auto-installed if missing)"],
+      "test_command": "python jarvis_client.py \"pon el volumen al 50%\""
+    }
+  },
+  "runtime_specs": {
+    "ram_mb": 94,
+    "disk_mb": 35.3,
+    "latency_ms": 28,
+    "offline": true,
+    "supported_platforms": ["macos-arm64", "windows-x86_64", "linux-x86_64"]
+  }
+}

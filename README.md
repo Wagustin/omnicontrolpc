@@ -17,7 +17,45 @@
 
 ---
 
+<img src="assets/install-flow.svg" alt="OmniControl PC One-Line Install Flow" width="100%" />
+
 </div>
+
+## 🚀 Instalación en 1 Línea (Zero-Config)
+
+### 🪟 En Windows (PowerShell / Laptop de bajos recursos)
+Abre PowerShell y pega este comando de instalación automática:
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex"
+```
+> **¿Sin consola?** Simplemente descarga el archivo **`install.bat`** del repositorio y haz **doble clic**. Configurará todo y creará un acceso directo en tu Escritorio automáticamente.
+
+---
+
+### 🍎 En macOS (Apple Silicon M1/M2/M3/M4)
+Abre Terminal y ejecuta:
+```bash
+curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.sh | bash
+```
+> Configura el comando global `omnicontrol` en tu sistema para usarlo desde cualquier terminal o atajo de teclado de Raycast / Alfred.
+
+---
+
+### 🤖 Para Agentes de IA Autónomos (Claude Code, Cursor, Windsurf, OpenCode, Hermes)
+Este repositorio implementa las especificaciones estándar de autodescubrimiento e instalación desatendida para agentes:
+* **`llms.txt`**: Documento de contexto y contratos de llamada para modelos de lenguaje.
+* **`agent-install.json`**: Especificación JSON de prerrequisitos, comandos de prueba y metadatos de ejecución.
+
+Si eres un agente de IA, instala y prueba el entorno con:
+```bash
+# macOS:
+curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.sh | bash && python3 ~/.omnicontrolpc/jarvis_client.py "sube el volumen al 50%"
+
+# Windows:
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex"
+```
+
+---
 
 ## 🌟 ¿Qué es OmniControl PC?
 
@@ -72,63 +110,6 @@ El modelo opera de forma determinista sobre 5 esquemas de herramientas:
 
 ---
 
-## 💻 Guía de Ejecución Rápida
-
-### 🍎 Opción A: En tu MacBook Pro (Apple Silicon)
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/Wagustin/omnicontrolpc.git
-   cd omnicontrolpc
-   ```
-
-2. **Instalar el runtime ultra-ligero:**
-   ```bash
-   pip install cactus-needle
-   ```
-
-3. **Ejecutar comandos directos:**
-   ```bash
-   # Buscar archivos de la universidad y abrirlos en pantalla:
-   python jarvis_client.py "busca los apuntes de Sistemas Operativos"
-
-   # Control del sistema:
-   python jarvis_client.py "sube el volumen al 50%"
-
-   # Abrir aplicaciones o plataformas:
-   python jarvis_client.py "abre el campus virtual"
-   ```
-
----
-
-### 🪟 Opción B: En una Laptop Modesta con Windows (ej. Intel Core i3 7ma Gen / 8 GB RAM)
-
-Este motor está diseñado específicamente para correr fluido en equipos de bajos recursos sin depender de tarjeta gráfica dedicada ni saturar la memoria RAM.
-
-1. **Clonar o descargar el proyecto en Windows:**
-   ```powershell
-   git clone https://github.com/Wagustin/omnicontrolpc.git
-   cd omnicontrolpc
-   ```
-
-2. **Instalar la dependencia:**
-   ```powershell
-   pip install cactus-needle
-   ```
-
-3. **(Opcional Recomendado) Búsqueda instantánea en <5 ms:**
-   * Descarga la utilidad gratuita **[Voidtools Everything](https://www.voidtools.com/)** y su herramienta de línea de comandos **`es.exe`**.
-   * Coloca `es.exe` en tu PATH o en la carpeta del proyecto. El script la detectará automáticamente para indexar y buscar archivos NTFS al instante.
-
-4. **Probar el asistente:**
-   ```powershell
-   python jarvis_client.py "pon el volumen al 40%"
-   python jarvis_client.py "busca en Descargas el PDF de la matrícula"
-   python jarvis_client.py "bloquea la pantalla"
-   ```
-
----
-
 ## 📊 Especificaciones de Hardware & Rendimiento
 
 | Parámetro | MacBook Pro (M-Series) | Laptop i3 7ma Gen (Windows) |
@@ -141,8 +122,32 @@ Este motor está diseñado específicamente para correr fluido en equipos de baj
 
 ---
 
+## 📂 Estructura del Repositorio
+
+```
+.
+├── assets/
+│   ├── omnicontrol-banner.svg   # Banner visual con motion design
+│   └── install-flow.svg         # Diagrama animado de instalación
+├── schemas/
+│   └── tools.json               # Schemas de herramientas del sistema
+├── data/
+│   ├── train.jsonl              # Dataset en español (288 muestras)
+│   └── val.jsonl                # Dataset de validación (51 muestras)
+├── jarvis_client.py             # Cliente unificado macOS & Windows
+├── install.ps1                  # Instalador automatizado para Windows
+├── install.bat                  # Instalador por doble clic para Windows
+├── install.sh                   # Instalador automatizado para macOS/Linux
+├── llms.txt                     # Estándar de contexto para agentes de IA
+├── agent-install.json           # Especificación de instalación agéntica
+├── run_finetune.sh              # Script de entrenamiento LoRA
+└── README.md                    # Documentación interactiva
+```
+
+---
+
 ## 📜 Licencias y Reconocimientos
 
 * **Motor Base (Needle 3):** Creado por [Cactus Compute](https://cactuscompute.com/needle) bajo licencia **Apache-2.0**.
-* **OmniControl PC:** Código fuente, herramientas y adaptadores publicados bajo licencia **Apache-2.0**.
+* **OmniControl PC:** Publicado bajo licencia **Apache-2.0**.
 * **Autor:** Diseñado y mantenido por [Agustín](https://github.com/Wagustin).

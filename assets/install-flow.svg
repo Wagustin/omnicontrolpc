@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 280" width="100%" height="100%" style="background: transparent;">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="installBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080D1A" />
+      <stop offset="50%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#060913" />
+    </linearGradient>
+
+    <!-- Glowing Progress Gradient -->
+    <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#34D399" />
+    </linearGradient>
+
+    <!-- Filter Glow -->
+    <filter id="installGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Keyframe Animations -->
+    <style>
+      @keyframes blinkCursor {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+      @keyframes pulseStep {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.2)); }
+        50% { transform: scale(1.02); filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)); }
+      }
+      @keyframes flowProgress {
+        0% { width: 0; }
+        35% { width: 140px; }
+        70% { width: 340px; }
+        100% { width: 520px; }
+      }
+      @keyframes checkmarkPop {
+        0%, 65% { opacity: 0; transform: scale(0.6); }
+        80% { opacity: 1; transform: scale(1.15); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes pulseDot {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+
+      .terminal-cursor { animation: blinkCursor 0.9s infinite; }
+      .step-1 { animation: pulseStep 4s ease-in-out infinite; }
+      .step-2 { animation: pulseStep 4s ease-in-out infinite 1.3s; }
+      .step-3 { animation: pulseStep 4s ease-in-out infinite 2.6s; }
+      .progress-bar-fill { animation: flowProgress 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+      .pop-check { animation: checkmarkPop 3.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+      .dot-flow { animation: pulseDot 1.5s infinite; }
+    </style>
+  </defs>
+
+  <!-- Container Box -->
+  <rect x="2" y="2" width="846" height="276" rx="18" fill="url(#installBgGrad)" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- Section Title -->
+  <g transform="translate(425, 40)" text-anchor="middle">
+    <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="18" fill="#F8FAFC" letter-spacing="0.8">
+      INSTALACIÓN AUTÓNOMA EN 1 LÍNEA (HUMANOS &amp; AGENTES IA)
+    </text>
+    <text y="20" font-family="'Segoe UI', Roboto, sans-serif" font-weight="400" font-size="12" fill="#94A3B8">
+      Zero-Config • Compatible con macOS (Apple Silicon), Windows 10/11 y Linux
+    </text>
+  </g>
+
+  <!-- Simulated Interactive Terminal Box -->
+  <g transform="translate(165, 82)">
+    <rect width="520" height="58" rx="10" fill="#030712" stroke="#334155" stroke-width="1.2" />
+    
+    <!-- Window Dots -->
+    <circle cx="20" cy="18" r="4.5" fill="#EF4444" opacity="0.8" />
+    <circle cx="34" cy="18" r="4.5" fill="#F59E0B" opacity="0.8" />
+    <circle cx="48" cy="18" r="4.5" fill="#10B981" opacity="0.8" />
+    <text x="64" y="22" font-family="monospace" font-size="10" fill="#64748B">terminal ~ omnicontrol-installer</text>
+
+    <!-- Command Prompt Line -->
+    <text x="20" y="44" font-family="monospace" font-size="13" font-weight="600" fill="#38BDF8">$</text>
+    <text x="36" y="44" font-family="monospace" font-size="12.5" fill="#F1F5F9">curl -fsSL https://git.new/omnicontrol | bash</text>
+    <rect x="368" y="32" width="8" height="15" fill="#38BDF8" class="terminal-cursor" />
+  </g>
+
+  <!-- Animated Progress Track -->
+  <g transform="translate(165, 150)">
+    <!-- Track Background -->
+    <rect width="520" height="6" rx="3" fill="#1E293B" />
+    <!-- Dynamic Glowing Fill -->
+    <rect height="6" rx="3" fill="url(#progressGrad)" class="progress-bar-fill" filter="url(#installGlow)" />
+  </g>
+
+  <!-- 3-Step Execution Pipeline Cards -->
+  <g transform="translate(90, 175)">
+    <!-- Step 1: Download & Unpack -->
+    <g class="step-1" transform="translate(0, 0)">
+      <rect width="200" height="72" rx="12" fill="#0B132B" stroke="#38BDF8" stroke-width="1.2" />
+      <circle cx="24" cy="24" r="10" fill="#1E293B" />
+      <text x="24" y="28" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="11" fill="#38BDF8">1</text>
+      <text x="44" y="26" font-family="'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" fill="#F8FAFC">Auto-Unpack</text>
+      <text x="18" y="46" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#94A3B8">Pesa solo 35.3 MB.</text>
+      <text x="18" y="60" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#38BDF8">Sin descargas pesadas.</text>
+    </g>
+
+    <!-- Flow Arrow 1 -->
+    <text x="215" y="42" font-family="sans-serif" font-weight="800" font-size="18" fill="#475569" class="dot-flow">→</text>
+
+    <!-- Step 2: On-Device Linking -->
+    <g class="step-2" transform="translate(235, 0)">
+      <rect width="200" height="72" rx="12" fill="#0B132B" stroke="#818CF8" stroke-width="1.2" />
+      <circle cx="24" cy="24" r="10" fill="#1E293B" />
+      <text x="24" y="28" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="11" fill="#818CF8">2</text>
+      <text x="44" y="26" font-family="'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" fill="#F8FAFC">Native OS Hooks</text>
+      <text x="18" y="46" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#94A3B8">Spotlight &amp; Everything</text>
+      <text x="18" y="60" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#818CF8">AppleScript / Win32</text>
+    </g>
+
+    <!-- Flow Arrow 2 -->
+    <text x="450" y="42" font-family="sans-serif" font-weight="800" font-size="18" fill="#475569" class="dot-flow">→</text>
+
+    <!-- Step 3: Verified Ready -->
+    <g class="step-3" transform="translate(470, 0)">
+      <rect width="200" height="72" rx="12" fill="#061A14" stroke="#10B981" stroke-width="1.2" />
+      <circle cx="24" cy="24" r="10" fill="#10B981" />
+      <text x="24" y="28" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#061A14" class="pop-check">✓</text>
+      <text x="44" y="26" font-family="'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="12" fill="#10B981">Listo &amp; Activo</text>
+      <text x="18" y="46" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#E2E8F0">Inferencia en &lt; 28 ms.</text>
+      <text x="18" y="60" font-family="'Segoe UI', Roboto, sans-serif" font-size="10.5" fill="#34D399">100% Local y Offline.</text>
+    </g>
+  </g>
+</svg>

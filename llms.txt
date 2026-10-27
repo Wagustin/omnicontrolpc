@@ -1,0 +1,38 @@
+# OmniControl PC - LLM & AI Agent Guide
+
+> This file follows the llms.txt standard to help autonomous AI coding agents (Claude Code, Cursor, Windsurf, OpenCode, Hermes, Antigravity) understand, install, and execute OmniControl PC.
+
+## Overview
+- Project: OmniControl PC (https://github.com/Wagustin/omnicontrolpc)
+- Purpose: Ultralight (~35MB) On-Device System Assistant & Tool Engine for macOS and Windows.
+- Core Engine: Cactus Compute Needle 3 (Simple Attention Network, 20 layers, CQ W4 STE + A8 quantized weights).
+- License: Apache-2.0
+- Memory Footprint: ~94 MB RAM (runs on low-end hardware, e.g., Intel Core i3 7th Gen / 8GB RAM and Apple Silicon M-series).
+- Inference Latency: < 28 ms (on-device, 100% offline).
+
+## Autonomous Agent Quick Install
+
+### For macOS (Apple Silicon ARM64):
+```bash
+curl -fsSL https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.sh | bash
+```
+
+### For Windows (x86_64):
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex"
+```
+
+## Tool Schemas
+The tool specifications live at `schemas/tools.json`:
+1. `find_files`: Fast document/file search via macOS Spotlight (`mdfind`) or Windows Everything (`es.exe`).
+2. `open_target`: Launch application, file, or URL.
+3. `system_control`: Set volume (0-100), mute/unmute, take screenshot, lock screen.
+4. `study_notes`: Search or create markdown notes in Obsidian vault.
+5. `delegate_kathy`: Escalate complex reasoning / code / email tasks to senior AI.
+
+## Verification & Health Check
+After installation, verify with:
+```bash
+python jarvis_client.py "sube el volumen al 50%"
+```
+Expected output: JSON function call matching `system_control` with `{"action": "set_volume", "level": 50}` executed in <30ms.
