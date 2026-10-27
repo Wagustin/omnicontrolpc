@@ -22,3 +22,6 @@ ENV/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Installer state, virtual environment, engine and logs
+.omnicontrol/
