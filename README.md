@@ -1,18 +1,18 @@
 <div align="center">
 
-<img src="assets/omnicontrol-banner.svg" alt="OmniControl PC Animated Banner" width="100%" />
+<img src="assets/omnicontrol-banner.svg" alt="OmniControl PC Technical Banner" width="100%" />
 
 <br/>
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Platform: macOS & Windows](https://img.shields.io/badge/Platform-macOS%20ARM64%20%7C%20Windows%20x64-indigo.svg)]()
-[![Model Size](https://img.shields.io/badge/Model%20Weight-35.3%20MB-emerald.svg)]()
-[![RAM Consumption](https://img.shields.io/badge/RAM-~94%20MB-purple.svg)]()
-[![Inference Latency](https://img.shields.io/badge/Latency-%3C%2028ms-cyan.svg)]()
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-18181B.svg)](LICENSE)
+[![Platform: macOS & Windows](https://img.shields.io/badge/Platform-macOS%20ARM64%20%7C%20Windows%20x64-27272A.svg)]()
+[![Model Size](https://img.shields.io/badge/Model%20Weight-35.3%20MB-3F3F46.svg)]()
+[![RAM Consumption](https://img.shields.io/badge/RAM-~94%20MB-52525B.svg)]()
+[![Inference Latency](https://img.shields.io/badge/Latency-%3C%2028ms-71717A.svg)]()
 
 <p align="center">
   <b>Asistente de sistema y control remoto por herramientas ultra-ligero para macOS y Windows.</b><br/>
-  <i>Entrenado para español natural. 100% Offline. Diseñado para correr en cualquier PC, desde una MacBook Pro M-series hasta laptops modestas con Intel Core i3 y 8 GB de RAM.</i>
+  <i>Entrenado para español natural. 100% Offline. Publicado bajo licencia Apache-2.0.</i>
 </p>
 
 ---
@@ -28,7 +28,7 @@ Abre PowerShell y pega este comando de instalación automática:
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Wagustin/omnicontrolpc/main/install.ps1 | iex"
 ```
-> **¿Sin consola?** Simplemente descarga el archivo **`install.bat`** del repositorio y haz **doble clic**. Configurará todo y creará un acceso directo en tu Escritorio automáticamente.
+> **¿Sin consola?** Descarga el archivo **`install.bat`** del repositorio y haz **doble clic**. Configurará el entorno y creará un acceso directo en tu Escritorio automáticamente.
 
 ---
 
@@ -63,8 +63,8 @@ La mayoría de asistentes basados en LLMs requieren GPUs dedicadas pesadas, cons
 
 **OmniControl PC** toma un enfoque radicalmente minimalista y agéntico:
 * **⚡ Latencia menor a 28ms:** Ejecuta llamadas deterministas de sistema en milisegundos reales.
-* **🪶 Huella mínima (~35 MB en disco, ~94 MB en RAM):** Consume menos memoria que una sola pestaña de navegador web.
-* **💻 Funciona en hardware modesto:** Optimizado para instrucciones vectoriales de CPU (AVX2 / SSE4.2). Corre sin esfuerzo en un procesador **Intel Core i3 de 7ma generación con 8 GB de RAM**, así como en **Apple Silicon (M1/M2/M3/M4)**.
+* **🪶 Huella mínima (~35 MB en disco, ~94 MB en RAM):** Consume menos memoria que una pestaña vacía de navegador web.
+* **💻 Optimizado para CPU:** Diseñado para instrucciones vectoriales de CPU (AVX2 / SSE4.2 en Windows x86_64 y Apple Silicon ARM64) sin requerir tarjeta gráfica dedicada.
 * **🇪🇸 Fine-Tuning en Español:** Corrige la supresión de llamadas del modelo base en frases cotidianas en español (*"sube el volumen al 50%"*, *"busca los apuntes de SO en Descargas"*, *"abre el campus de la universidad"*).
 * **📜 Licencia Apache-2.0:** Código y modelo base bajo una de las licencias más permisivas y abiertas de la industria.
 
@@ -112,12 +112,12 @@ El modelo opera de forma determinista sobre 5 esquemas de herramientas:
 
 ## 📊 Especificaciones de Hardware & Rendimiento
 
-| Parámetro | MacBook Pro (M-Series) | Laptop i3 7ma Gen (Windows) |
+| Parámetro | macOS (Apple Silicon ARM64) | Windows PC (x86_64) |
 | :--- | :--- | :--- |
 | **Uso de RAM** | ~94 MB | ~98 MB |
 | **Uso de CPU** | < 2% en inferencia | < 5% en inferencia |
-| **Tiempo de Inferencia** | 18 ms - 24 ms | 42 ms - 55 ms |
-| **GPU Requerida** | Ninguna (CPU Apple Silicon) | Ninguna (CPU Intel AVX2) |
+| **Tiempo de Inferencia** | 18 ms - 24 ms | 35 ms - 50 ms |
+| **GPU Requerida** | Ninguna (CPU Apple Silicon) | Ninguna (CPU AVX2 / SSE4.2) |
 | **Espacio en Disco** | 35.3 MB | 35.3 MB |
 
 ---
@@ -127,8 +127,8 @@ El modelo opera de forma determinista sobre 5 esquemas de herramientas:
 ```
 .
 ├── assets/
-│   ├── omnicontrol-banner.svg   # Banner visual con motion design
-│   └── install-flow.svg         # Diagrama animado de instalación
+│   ├── omnicontrol-banner.svg   # Banner visual técnico monocromático
+│   └── install-flow.svg         # Diagrama de flujo de instalación estable
 ├── schemas/
 │   └── tools.json               # Schemas de herramientas del sistema
 ├── data/
@@ -141,7 +141,7 @@ El modelo opera de forma determinista sobre 5 esquemas de herramientas:
 ├── llms.txt                     # Estándar de contexto para agentes de IA
 ├── agent-install.json           # Especificación de instalación agéntica
 ├── run_finetune.sh              # Script de entrenamiento LoRA
-└── README.md                    # Documentación interactiva
+└── README.md                    # Documentación técnica
 ```
 
 ---
