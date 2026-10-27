@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Jarvis Cross-Platform Client (Windows & macOS)
-Ejecuta acciones locales en milisegundos con Needle 3.
+Ejecuta acciones locales en milisegundos con Needle 3 y fallback determinista.
 """
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -32,7 +33,6 @@ def search_files_local(query, file_type="any", folder="any"):
         results = [f for f in res.stdout.splitlines() if f.strip()]
         
     elif IS_WIN:
-        # 1. Si Everything CLI (es.exe) está instalado, es instantáneo (<5 ms)
         if shutil.which("es"):
             es_cmd = ["es", query]
             if folder == "Downloads":
@@ -44,7 +44,6 @@ def search_files_local(query, file_type="any", folder="any"):
             res = subprocess.run(es_cmd, capture_output=True, text=True)
             results = [f for f in res.stdout.splitlines() if f.strip()]
         else:
-            # Fallback a PowerShell Get-ChildItem en carpetas de usuario
             target_dir = os.path.expanduser("~")
             if folder == "Downloads":
                 target_dir = os.path.expanduser("~\\Downloads")
@@ -73,7 +72,6 @@ def open_target_local(target, target_type):
         else:
             subprocess.run(["open", target])
     elif IS_WIN:
-        # En Windows 'start' abre URLs, apps o archivos registrados con el visor predeterminado
         subprocess.run(f'cmd.exe /c start "" "{target}"', shell=True)
     elif IS_LINUX:
         subprocess.run(["xdg-open", target])
@@ -81,7 +79,7 @@ def open_target_local(target, target_type):
 def system_control_local(action, level=50):
     if IS_MAC:
         if action == "set_volume":
-            subprocess.run(["osascript", "-e", f"set volume output volume {level}"])
+            subprocess.run(["osascript", "-e", "set volume without output muted", "-e", f"set volume output volume {level}"])
         elif action == "mute":
             subprocess.run(["osascript", "-e", "set volume with output muted"])
         elif action == "unmute":
@@ -89,12 +87,12 @@ def system_control_local(action, level=50):
         elif action == "take_screenshot":
             p = os.path.expanduser("~/Desktop/screenshot_jarvis.png")
             subprocess.run(["screencapture", "-x", p])
+            print(f"[✓] Captura guardada en: {p}")
         elif action == "lock_screen":
             subprocess.run(["pmset", "displaysleepnow"])
             
     elif IS_WIN:
         if action == "set_volume":
-            # Si nircmd está disponible o vía PowerShell Audio API
             if shutil.which("nircmd"):
                 val = int((level / 100) * 65535)
                 subprocess.run(["nircmd", "setsysvolume", str(val)])
@@ -110,13 +108,65 @@ def system_control_local(action, level=50):
             if shutil.which("nircmd"):
                 p = os.path.expanduser("~\\Desktop\\screenshot_jarvis.png")
                 subprocess.run(["nircmd", "savescreenshot", p])
+                print(f"[✓] Captura guardada en: {p}")
         elif action == "lock_screen":
             subprocess.run("rundll32.exe user32.dll,LockWorkStation", shell=True)
+
+def rule_based_fallback(query):
+    q = query.lower().strip()
+    
+    # 1. Volumen y Audio
+    m_vol = re.search(r'(?:sube|baja|pon|ajusta|cambia)?\s*(?:el\s*)?volumen\s*(?:al?|en)?\s*(\d+)%?', q)
+    if m_vol:
+        return [{"name": "system_control", "arguments": {"action": "set_volume", "level": int(m_vol.group(1))}}]
+    if any(w in q for w in ["silencia", "mute", "mutear", "pon en silencio", "quitar sonido"]):
+        return [{"name": "system_control", "arguments": {"action": "mute"}}]
+    if any(w in q for w in ["desmutea", "unmute", "activa sonido", "activa el audio", "quitar silencio"]):
+        return [{"name": "system_control", "arguments": {"action": "unmute"}}]
+    if any(w in q for w in ["captura de pantalla", "screenshot", "pantallazo", "foto de la pantalla"]):
+        return [{"name": "system_control", "arguments": {"action": "take_screenshot"}}]
+    if any(w in q for w in ["bloquea la pantalla", "bloquear pantalla", "bloquea el mac", "bloquea el pc", "suspende la pantalla"]):
+        return [{"name": "system_control", "arguments": {"action": "lock_screen"}}]
+
+    # 2. Abrir URLs o Apps
+    m_url = re.search(r'abre\s+(https?://\S+)', q)
+    if m_url:
+        return [{"name": "open_target", "arguments": {"name": m_url.group(1), "target_type": "url"}}]
+    if "campus virtual" in q or "e-aules" in q:
+        return [{"name": "open_target", "arguments": {"name": "https://e-aules.uab.cat", "target_type": "url"}}]
+    if "caronte" in q:
+        return [{"name": "open_target", "arguments": {"name": "https://caronte.uab.cat", "target_type": "url"}}]
+    m_app = re.search(r'abre\s+(?:la\s*app\s*de\s*|el\s*programa\s*|la\s*aplicación\s*)?([a-zA-Z0-9_\s\.\-]+)$', q)
+    if m_app:
+        app_name = m_app.group(1).strip()
+        if app_name:
+            return [{"name": "open_target", "arguments": {"name": app_name, "target_type": "app"}}]
+
+    # 3. Buscar archivos
+    m_search = re.search(r'(?:busca|encuentra|localiza)\s+(?:los\s*apuntes\s*de\s*|el\s*archivo\s*|archivos\s*de\s*)?(.*?)\s*(?:en\s+(descargas|documentos|escritorio|obsidian))?$', q)
+    if m_search:
+        term = m_search.group(1).strip()
+        fld_raw = (m_search.group(2) or "").lower()
+        fld = "any"
+        if "descarga" in fld_raw: fld = "Downloads"
+        elif "documento" in fld_raw: fld = "Documents"
+        elif "escritorio" in fld_raw: fld = "Desktop"
+        elif "obsidian" in fld_raw: fld = "obsidian_vault"
+        if term:
+            return [{"name": "find_files", "arguments": {"query": term, "folder": fld, "file_type": "any"}}]
+
+    return []
 
 def execute_call(call):
     name = call.get("name")
     args = call.get("arguments", {})
-    print(f"[*] Jarvis Acción: {name} -> {args}")
+    
+    # Sanitizar casos donde el modelo predijo mute con level > 0
+    if name == "system_control":
+        if args.get("action") == "mute" and args.get("level") is not None and args.get("level", 0) > 0:
+            args["action"] = "set_volume"
+            
+    print(f"[*] OmniControl Acción: {name} -> {args}")
     
     if name == "find_files":
         files = search_files_local(args.get("query", ""), args.get("file_type", "any"), args.get("folder", "any"))
@@ -143,12 +193,39 @@ def execute_call(call):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Uso: python jarvis_client.py 'sube el volumen al 50%'")
+        print("Uso: omnicontrol 'sube el volumen al 50%'")
         sys.exit(0)
         
-    from needle import Needle
-    # Carga weights .cact
-    ndl = Needle(tools="schemas/tools.json", stateless=True)
-    res = ndl.complete(" ".join(sys.argv[1:]))
-    for call in res.get("function_calls", []):
-        execute_call(call)
+    query = " ".join(sys.argv[1:])
+    executed = False
+    
+    # Intentar inferencia local con Needle 3
+    try:
+        from needle import Needle
+        schema_path = os.path.join(os.path.dirname(__file__), "schemas", "tools.json")
+        tools_data = []
+        if os.path.exists(schema_path):
+            with open(schema_path, "r", encoding="utf-8") as f:
+                tools_data = json.load(f)
+                
+        ndl = Needle(tools=tools_data, stateless=True)
+        res = ndl.complete(query)
+        calls = res.get("function_calls", [])
+        conf = res.get("confidence", 0.0) or 0.0
+        
+        if calls and conf >= 0.45:
+            for call in calls:
+                execute_call(call)
+            executed = True
+    except Exception as e:
+        pass
+        
+    # Fallback determinista si Needle no disparó o tuvo baja confianza
+    if not executed:
+        fallback_calls = rule_based_fallback(query)
+        if fallback_calls:
+            for call in fallback_calls:
+                execute_call(call)
+            executed = True
+        else:
+            execute_call({"name": "delegate_kathy", "arguments": {"request": query}})
