@@ -40,10 +40,14 @@ echo -e "${GREEN}[2/4] Configurando entorno virtual aislado...${NC}"
 VENV_DIR="$INSTALL_DIR/.venv"
 
 if command -v uv &>/dev/null; then
-    uv venv --quiet --python 3.12 "$VENV_DIR" 2>/dev/null || uv venv --quiet "$VENV_DIR"
+    if [ ! -d "$VENV_DIR" ]; then
+        uv venv --quiet --python 3.12 "$VENV_DIR" 2>/dev/null || uv venv --quiet "$VENV_DIR"
+    fi
     uv pip install --quiet --python "$VENV_DIR/bin/python" cactus-needle
 elif command -v python3 &>/dev/null; then
-    python3 -m venv "$VENV_DIR"
+    if [ ! -d "$VENV_DIR" ]; then
+        python3 -m venv "$VENV_DIR"
+    fi
     "$VENV_DIR/bin/pip" install --quiet cactus-needle
 else
     echo -e "${YELLOW}[!] Python no detectado. Instálalo con 'brew install python' (macOS).${NC}"
