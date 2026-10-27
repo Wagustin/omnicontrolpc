@@ -91,6 +91,7 @@ $script:EngineSourceLabel = ''
 
 function Get-FullPath {
     param([Parameter(Mandatory)][string]$Path)
+    $Path = [Environment]::ExpandEnvironmentVariables($Path)
     if ($Path -eq '~') { return $HOME }
     if ($Path.StartsWith('~\') -or $Path.StartsWith('~/')) {
         $Path = Join-Path $HOME $Path.Substring(2)
@@ -631,15 +632,25 @@ function Install-PythonPackage {
     }
 
     if (-not $SkipVerify) {
-        $global:LASTEXITCODE = 0
-        $null = & $VenvPython -c "from needle import Needle" 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            throw "The package '$PackageSpec' was installed, but 'from needle import Needle' failed. Check the log or try -PythonVersion 3.11."
+        if (Test-PackageImport -VenvPython $VenvPython) {
+            Write-Log "$PackageSpec import verified." 'OK' ([ConsoleColor]::Green)
+        } else {
+            Write-Log 'Import check failed; it will be retried after the engine is installed.' 'WARN' ([ConsoleColor]::Yellow)
         }
-        Write-Log "$PackageSpec import verified." 'OK' ([ConsoleColor]::Green)
     }
 
     $null = Invoke-External -FilePath $VenvPython -Arguments @('-m','pip','check') -Description 'pip check' -AllowFailure -Quiet
+}
+
+function Test-PackageImport {
+    param([Parameter(Mandatory)][string]$VenvPython)
+    try {
+        $global:LASTEXITCODE = 0
+        $null = & $VenvPython -c "from needle import Needle" 2>$null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
 }
 
 function Test-PeX64 {
@@ -1021,7 +1032,6 @@ while ($true) {
 @echo off
 setlocal EnableExtensions
 set "DATA=%~dp0"
-for %%I in ("%DATA%..") do set "ROOT=%%~fI"
 where pwsh.exe >nul 2>&1
 if not errorlevel 1 (
     set "PS_EXE=pwsh.exe"
@@ -1161,6 +1171,8 @@ function Initialize-Environment {
     $env:UV_HTTP_TIMEOUT = '120'
     $env:PYTHONUTF8 = '1'
     $env:PYTHONIOENCODING = 'utf-8'
+    $env:NO_COLOR = '1'
+    $env:CLICOLOR = '0'
 }
 
 function Assert-Preflight {
@@ -1272,6 +1284,13 @@ function Invoke-Main {
 
     Write-Step 'Installing the Needle engine (windows-x86_64)'
     Install-NeedleEngine
+
+    if (-not $SkipVerify -and -not (Test-PackageImport -VenvPython $venv.Python)) {
+        throw "The package '$PackageSpec' is installed, but 'from needle import Needle' still fails. Check the log, or retry with -PythonVersion 3.11."
+    }
+    if (-not $SkipVerify) {
+        Write-Log "$PackageSpec import verified after engine setup." 'OK' ([ConsoleColor]::Green)
+    }
 
     Write-Step 'Creating the launcher and Desktop shortcut'
     Install-AppPayload -SourceRoot $script:AppSourceRoot -DestinationRoot $script:InstallRoot
